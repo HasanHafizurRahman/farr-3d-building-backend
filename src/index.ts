@@ -14,7 +14,25 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'https://farr-3d-building.vercel.app'
+        ];
+
+        if (process.env.FRONTEND_URL) {
+            // Add the env var URL, stripping any trailing slash to ensure consistency
+            allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ""));
+        }
+
+        // Allow requests with no origin (like mobile apps, curl, or same-origin) or if origin is in allowlist
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`Blocked by CORS: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
