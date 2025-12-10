@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import Building from '../models/Building';
-import { upload } from '../middleware/upload';
+import { upload, uploadToCloudinary } from '../middleware/upload';
 
 const router = Router();
 
@@ -21,7 +21,6 @@ router.get('/:floorId', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // Return floor with building info
         res.json({
             ...floor,
             buildingId: building.id,
@@ -34,13 +33,14 @@ router.get('/:floorId', async (req: Request, res: Response): Promise<void> => {
 });
 
 // Upload floor map
-// @ts-ignore
 router.post('/:floorId/upload-map', upload.single('map'), async (req: Request, res: Response): Promise<void> => {
     try {
         if (!req.file) {
             res.status(400).json({ message: 'No file uploaded' });
             return;
         }
+
+        console.log('File received:', req.file.originalname, req.file.size, 'bytes');
 
         const building = await Building.findOne({ 'floors.id': req.params.floorId });
 
@@ -56,8 +56,12 @@ router.post('/:floorId/upload-map', upload.single('map'), async (req: Request, r
             return;
         }
 
-        // Construct public URL
-        const mapUrl = `/uploads/floor-maps/${req.file.filename}`;
+        console.log('Uploading to Cloudinary...');
+
+        // Upload to Cloudinary and get public URL
+        const mapUrl = await uploadToCloudinary(req.file);
+
+        console.log('Cloudinary URL:', mapUrl);
 
         // Update floor map URL
         building.floors[floorIndex].mapUrl = mapUrl;
@@ -70,7 +74,10 @@ router.post('/:floorId/upload-map', upload.single('map'), async (req: Request, r
 
     } catch (error) {
         console.error('Upload map error:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({
+            message: 'Server error',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 

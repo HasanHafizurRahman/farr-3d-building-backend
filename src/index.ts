@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
+
 import { connectDB } from './config/db';
 import authRoutes from './routes/auth';
 import buildingsRoutes from './routes/buildings';
@@ -36,10 +36,7 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-const isProduction = process.env.NODE_ENV === 'production';
-const uploadPath = isProduction ? '/tmp' : path.join(__dirname, '../uploads');
-app.use('/uploads/floor-maps', express.static(isProduction ? '/tmp' : path.join(__dirname, '../uploads/floor-maps')));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 
 // Routes
 app.use('/api/auth', authRoutes);
