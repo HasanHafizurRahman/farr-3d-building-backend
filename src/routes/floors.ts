@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import Building from '../models/Building';
+import { upload } from '../middleware/upload';
 
 const router = Router();
 
@@ -28,6 +29,47 @@ router.get('/:floorId', async (req: Request, res: Response): Promise<void> => {
         });
     } catch (error) {
         console.error('Get floor error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Upload floor map
+// @ts-ignore
+router.post('/:floorId/upload-map', upload.single('map'), async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.file) {
+            res.status(400).json({ message: 'No file uploaded' });
+            return;
+        }
+
+        const building = await Building.findOne({ 'floors.id': req.params.floorId });
+
+        if (!building) {
+            res.status(404).json({ message: 'Floor not found' });
+            return;
+        }
+
+        const floorIndex = building.floors.findIndex(f => f.id === req.params.floorId);
+
+        if (floorIndex === -1) {
+            res.status(404).json({ message: 'Floor not found' });
+            return;
+        }
+
+        // Construct public URL
+        const mapUrl = `/uploads/floor-maps/${req.file.filename}`;
+
+        // Update floor map URL
+        building.floors[floorIndex].mapUrl = mapUrl;
+        await building.save();
+
+        res.json({
+            message: 'Map uploaded successfully',
+            mapUrl: mapUrl
+        });
+
+    } catch (error) {
+        console.error('Upload map error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
