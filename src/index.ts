@@ -18,6 +18,9 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+const isProduction = process.env.NODE_ENV === 'production';
+const uploadPath = isProduction ? '/tmp' : path.join(__dirname, '../uploads');
+app.use('/uploads/floor-maps', express.static(isProduction ? '/tmp' : path.join(__dirname, '../uploads/floor-maps')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes

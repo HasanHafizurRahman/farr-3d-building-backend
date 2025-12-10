@@ -3,9 +3,16 @@ import path from 'path';
 import fs from 'fs';
 
 // Ensure uploads directory exists
-const uploadDir = 'uploads/floor-maps';
+const isProduction = process.env.NODE_ENV === 'production';
+const uploadDir = isProduction ? '/tmp' : 'uploads/floor-maps';
+
+// Only create directory if not in read-only environment or if it fails gracefully
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+    } catch (error) {
+        console.warn('Could not create upload directory:', error);
+    }
 }
 
 const storage = multer.diskStorage({
