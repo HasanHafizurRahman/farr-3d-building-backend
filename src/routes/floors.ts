@@ -23,7 +23,7 @@ router.get('/:floorId', async (req: Request, res: Response): Promise<void> => {
         }
 
         res.json({
-            ...floor,
+            ...(floor as any).toObject(),
             buildingId: building.id,
             buildingName: building.name
         });

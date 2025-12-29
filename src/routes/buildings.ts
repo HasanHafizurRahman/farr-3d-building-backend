@@ -129,10 +129,20 @@ router.put('/:id/floors/:floorId', authMiddleware, async (req: AuthRequest, res:
             return;
         }
 
-        // Validate level
-        if (req.body.level === null) {
-            res.status(400).json({ message: 'Level cannot be null' });
-            return;
+        // Validate and sanitize level if provided
+        if ('level' in req.body) {
+            const level = req.body.level;
+            if (level === null || level === undefined || level === '' || (typeof level === 'number' && isNaN(level))) {
+                res.status(400).json({ message: 'Level must be a valid number' });
+                return;
+            }
+            // Convert to number if it's a string
+            const numLevel = Number(level);
+            if (isNaN(numLevel)) {
+                res.status(400).json({ message: 'Level must be a valid number' });
+                return;
+            }
+            req.body.level = numLevel;
         }
 
         // Update floor fields
