@@ -42,21 +42,6 @@ router.post('/:floorId/upload-map', authMiddleware, upload.single('map'), async 
         }
 
         console.log('File received:', req.file.originalname, req.file.size, 'bytes');
-
-        const building = await Building.findOne({ 'floors.id': req.params.floorId });
-
-        if (!building) {
-            res.status(404).json({ message: 'Floor not found' });
-            return;
-        }
-
-        const floorIndex = building.floors.findIndex(f => f.id === req.params.floorId);
-
-        if (floorIndex === -1) {
-            res.status(404).json({ message: 'Floor not found' });
-            return;
-        }
-
         console.log('Uploading to Cloudinary...');
 
         // Upload to Cloudinary and get public URL
@@ -64,9 +49,17 @@ router.post('/:floorId/upload-map', authMiddleware, upload.single('map'), async 
 
         console.log('Cloudinary URL:', mapUrl);
 
-        // Update floor map URL
-        building.floors[floorIndex].mapUrl = mapUrl;
-        await building.save();
+        // Use findOneAndUpdate with $set to update only the mapUrl without triggering full validation
+        const building = await Building.findOneAndUpdate(
+            { 'floors.id': req.params.floorId },
+            { $set: { 'floors.$.mapUrl': mapUrl } },
+            { new: true }
+        );
+
+        if (!building) {
+            res.status(404).json({ message: 'Floor not found' });
+            return;
+        }
 
         res.json({
             message: 'Map uploaded successfully',
