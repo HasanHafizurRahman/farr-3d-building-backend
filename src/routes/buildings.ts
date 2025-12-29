@@ -145,8 +145,11 @@ router.put('/:id/floors/:floorId', authMiddleware, async (req: AuthRequest, res:
             req.body.level = numLevel;
         }
 
+        // Remove MongoDB internal fields that cannot be overwritten
+        const { _id, __v, ...updateData } = req.body;
+
         // Update floor fields
-        Object.assign(building.floors[floorIndex], req.body);
+        Object.assign(building.floors[floorIndex], updateData);
         await building.save();
 
         res.json(building);
