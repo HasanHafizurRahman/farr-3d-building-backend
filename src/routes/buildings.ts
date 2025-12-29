@@ -129,6 +129,12 @@ router.put('/:id/floors/:floorId', authMiddleware, async (req: AuthRequest, res:
             return;
         }
 
+        // Validate level
+        if (req.body.level === null) {
+            res.status(400).json({ message: 'Level cannot be null' });
+            return;
+        }
+
         // Update floor fields
         Object.assign(building.floors[floorIndex], req.body);
         await building.save();

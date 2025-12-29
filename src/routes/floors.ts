@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import Building from '../models/Building';
 import { upload, uploadToCloudinary } from '../middleware/upload';
+import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -33,10 +34,10 @@ router.get('/:floorId', async (req: Request, res: Response): Promise<void> => {
 });
 
 // Upload floor map
-router.post('/:floorId/upload-map', upload.single('map'), async (req: Request, res: Response): Promise<void> => {
+router.post('/:floorId/upload-map', authMiddleware, upload.single('map'), async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         if (!req.file) {
-            res.status(400).json({ message: 'No file uploaded' });
+            res.status(400).json({ message: 'No file uploaded. Ensure the form-data field name is "map".' });
             return;
         }
 
